@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -13,5 +14,10 @@ public class StationService {
     @Transactional(readOnly = true)
     public List<StationEntity> station_testservice(){
         return stationRepository.station_testrespository();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StationEntity> station_findByRadius(Double lng, Double lat){
+        return stationRepository.station_findByRadius(lng,lat,3000);
     }
 }

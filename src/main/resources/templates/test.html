@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<table class="table table-hover">
+    <tr th:each="list :${function1}">
+        <td>[[${list.stationinfo_code}]]</td>
+        <td>[[${list.stationinfo_ars}]]</td>
+        <td>[[${list.stationinfo_nm}]]</td>
+        <td>[[${list.stationinfo_lng}]]</td>
+        <td>[[${list.stationinfo_lat}]]</td>
+    </tr>
+</table>
+
+</body>
+</html>
