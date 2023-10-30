@@ -3,8 +3,10 @@ package com.example.project_spring_optimalroute.Bus.Station;
 import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class StationDTO {
     private int stationinfo_code;
@@ -20,4 +22,6 @@ public class StationDTO {
         this.stationinfo_lng = entity.getStationinfo_lng();
         this.stationinfo_lat = entity.getStationinfo_lat();
     }
+
+
 }

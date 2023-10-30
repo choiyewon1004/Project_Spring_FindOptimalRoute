@@ -18,6 +18,6 @@ public class StationService {
 
     @Transactional(readOnly = true)
     public List<StationEntity> station_findByRadius(Double lng, Double lat){
-        return stationRepository.station_findByRadius(lng,lat,3000);
+        return stationRepository.station_findByRadius(lng,lat,100);
     }
 }
