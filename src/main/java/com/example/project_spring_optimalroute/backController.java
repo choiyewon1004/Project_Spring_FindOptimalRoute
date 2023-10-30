@@ -1,7 +1,9 @@
 package com.example.project_spring_optimalroute;
 
-import com.example.project_spring_optimalroute.Bus.Bus.BusDTO;
-import com.example.project_spring_optimalroute.Bus.Station.StationDTO;
+
+import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
+import com.example.project_spring_optimalroute.Cluster.GeoPoint;
+import com.example.project_spring_optimalroute.Cluster.KmeansClusteringService;
 import com.example.project_spring_optimalroute.Route.RDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -10,6 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Controller
@@ -18,6 +23,9 @@ public class backController {
     public Double start_lat = 37.45751315203417; public Double start_lng = 126.88862420186092;
     public Double end_lat = 37.55197466819207; public Double end_lng = 126.97323574278629 ;
     public Integer set_radius = 3000;
+
+    private final KmeansClusteringService kmeansClusteringService ;
+
 
     @GetMapping("/")
     public String index(Model model){
@@ -108,6 +116,39 @@ public class backController {
     기능 2
     - final_list의 위경도 값을 가져와 군집화
      */
+    public String func2(ArrayList<RDTO> list_data) {
+
+        Map<GeoPoint, RDTO> data = make_data(list_data);
+        System.out.println("log: here to check test");
+        for(int i=0;i<data.size();i++){
+            System.out.println(data.values().stream().toList().get(i).getRoute_nm());
+        }
+        System.out.println("log: init data size : "+ data.size());
+
+        List<ClusteringResult> result = kmeansClusteringService.getClusteringResult(data);
+        for(int i=0;i<result.size();i++){
+            System.out.println("log: "+result.get(i).getGroupId());
+            for(int j=0;j<result.get(i).getClusteringLocationList().size();j++){
+                System.out.println("log: "+result.get(i).getClusteringLocationList());
+
+            }
+        }
+
+
+        return "home";
+    }
+
+    public Map<GeoPoint, RDTO> make_data(List<RDTO> dummy_data){
+        final Map<GeoPoint, RDTO> GEO_POINT_MAP = new HashMap<>();
+
+        for(int i=0;i<dummy_data.size();i++){
+            GEO_POINT_MAP.put( GeoPoint.of(dummy_data.get(i).getRoute_lat(),dummy_data.get(i).getRoute_lng()) , dummy_data.get(i));
+        }
+
+        System.out.println(GEO_POINT_MAP);
+
+        return GEO_POINT_MAP;
+    }
 
     /*
     기능 3
