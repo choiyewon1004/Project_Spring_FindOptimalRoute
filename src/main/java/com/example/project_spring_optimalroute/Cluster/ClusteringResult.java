@@ -34,7 +34,7 @@ public class ClusteringResult {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor(staticName = "of")
-    private static class ClusteringLocation {
+    public static class ClusteringLocation {
         GeoPoint geoPoint;
         RDTO locationInfo;
     }

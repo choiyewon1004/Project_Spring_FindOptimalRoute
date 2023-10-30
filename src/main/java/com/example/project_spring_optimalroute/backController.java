@@ -29,8 +29,12 @@ public class backController {
 
     @GetMapping("/")
     public String index(Model model){
-        ArrayList<RDTO> res1 =function1(start_lat, start_lng, end_lat, end_lng,set_radius);
+        ArrayList<RDTO> res1 =func1(start_lat, start_lng, end_lat, end_lng,set_radius);
         model.addAttribute("func1",res1);
+
+        List<ClusteringResult> res2 = func2(res1);
+        model.addAttribute("func2", res2);
+
         return "test";
 
     }
@@ -41,7 +45,7 @@ public class backController {
     - reachable_list에 존재하는 모든 [버스/지하철]이 운항하는 노선을 파악
     - 파악된 노선 중 출발지와 목적지 사이에 존재하는 [정류장 / 역]을 목록화(final_list)
     */
-    public ArrayList<RDTO> function1(Double p_st, Double p_sg, Double p_et, Double p_eg, int p_set_radius){
+    public ArrayList<RDTO> func1(Double p_st, Double p_sg, Double p_et, Double p_eg, int p_set_radius){
         ArrayList<RDTO> res_list = new ArrayList<RDTO>();
 
         try{
@@ -116,26 +120,11 @@ public class backController {
     기능 2
     - final_list의 위경도 값을 가져와 군집화
      */
-    public String func2(ArrayList<RDTO> list_data) {
+    public List<ClusteringResult> func2(ArrayList<RDTO> list_data) {
 
         Map<GeoPoint, RDTO> data = make_data(list_data);
-        System.out.println("log: here to check test");
-        for(int i=0;i<data.size();i++){
-            System.out.println(data.values().stream().toList().get(i).getRoute_nm());
-        }
-        System.out.println("log: init data size : "+ data.size());
-
-        List<ClusteringResult> result = kmeansClusteringService.getClusteringResult(data);
-        for(int i=0;i<result.size();i++){
-            System.out.println("log: "+result.get(i).getGroupId());
-            for(int j=0;j<result.get(i).getClusteringLocationList().size();j++){
-                System.out.println("log: "+result.get(i).getClusteringLocationList());
-
-            }
-        }
-
-
-        return "home";
+        List<ClusteringResult> res_func2 = kmeansClusteringService.getClusteringResult(data);
+        return res_func2;
     }
 
     public Map<GeoPoint, RDTO> make_data(List<RDTO> dummy_data){
@@ -144,9 +133,7 @@ public class backController {
         for(int i=0;i<dummy_data.size();i++){
             GEO_POINT_MAP.put( GeoPoint.of(dummy_data.get(i).getRoute_lat(),dummy_data.get(i).getRoute_lng()) , dummy_data.get(i));
         }
-
-        System.out.println(GEO_POINT_MAP);
-
+//        System.out.println(GEO_POINT_MAP);
         return GEO_POINT_MAP;
     }
 
