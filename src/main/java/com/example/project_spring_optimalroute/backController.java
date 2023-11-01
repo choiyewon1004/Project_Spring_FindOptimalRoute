@@ -32,9 +32,13 @@ public class backController {
         ArrayList<RDTO> res1 =func1(start_lat, start_lng, end_lat, end_lng,set_radius);
         model.addAttribute("func1",res1);
 
-        List<ClusteringResult> res2 = func2(res1);
+        List<ClusteringResult> res2 = func2(res1); // groupId, groupList 로 구성
         print_func2_data(res2);
-        model.addAttribute("func2",res2);
+        List<RDTO> find_res2 = find_func2_middle(res2); // group 별 중심 info 정보, idx가 groupId
+        model.addAttribute("func2",find_res2);
+
+
+
 
         return "test";
 
@@ -148,6 +152,34 @@ public class backController {
         }
     }
 
+    public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2){
+        List<RDTO> list_func2_middle = new ArrayList<>();
+        for(int test_idx=0;test_idx<res_func2.size();test_idx++){
+            int find_size = res_func2.get(test_idx).getClusteringLocationList().size();
+            for(int i=0;i<find_size;i++){
+                for(int j=0;j<find_size;j++){
+                    if(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint().getLat() > res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint().getLat() ){
+                        ClusteringResult.ClusteringLocation temp1 = ClusteringResult.ClusteringLocation.of(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint(),res_func2.get(test_idx).getClusteringLocationList().get(i).getLocationInfo());
+                        res_func2.get(test_idx).getClusteringLocationList().get(i).setLocationInfo(res_func2.get(test_idx).getClusteringLocationList().get(j).getLocationInfo());
+                        res_func2.get(test_idx).getClusteringLocationList().get(i).setGeoPoint(res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint());
+                        res_func2.get(test_idx).getClusteringLocationList().get(j).setLocationInfo(temp1.getLocationInfo());
+                        res_func2.get(test_idx).getClusteringLocationList().get(j).setGeoPoint(temp1.getGeoPoint());
+                    }else if(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint().getLat() == res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint().getLat()){
+                        if(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint().getLon() > res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint().getLon()){
+                            ClusteringResult.ClusteringLocation temp2 = ClusteringResult.ClusteringLocation.of(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint(),res_func2.get(test_idx).getClusteringLocationList().get(i).getLocationInfo());
+                            res_func2.get(test_idx).getClusteringLocationList().get(i).setLocationInfo(res_func2.get(test_idx).getClusteringLocationList().get(j).getLocationInfo());
+                            res_func2.get(test_idx).getClusteringLocationList().get(i).setGeoPoint(res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint());
+                            res_func2.get(test_idx).getClusteringLocationList().get(j).setLocationInfo(temp2.getLocationInfo());
+                            res_func2.get(test_idx).getClusteringLocationList().get(j).setGeoPoint(temp2.getGeoPoint());
+                        }
+                    }
+                }
+            }
+            int find_idx = find_size/2;
+            list_func2_middle.add(res_func2.get(test_idx).getClusteringLocationList().get(find_idx).getLocationInfo());
+        }
+        return list_func2_middle;
+    }
 
     /*
     기능 3
