@@ -39,6 +39,7 @@ public class backController {
         List<RDTO> find_res2 = find_func2_middle(res2); // group 별 중심 info 정보, idx가 groupId
         model.addAttribute("func2",find_res2);
 
+        //func3
 
 
 
@@ -185,9 +186,28 @@ public class backController {
 
     /*
     기능 3
-    - API를 통해 출발점부터 군집 중심들까지의 택시 거리와 비용을 계산
+    - API를 통해 출발점부터 군집 중심들까지의 택시 거리와 비용을 계산하여 가장 효율적인 군집 인덱스 도출
     */
+    public int func3(List<RDTO> res_func3){
+        int res_closer =99999999;
+        int res_idx =0;
+        for(int i=0;i<res_func3.size();i++){
+            int here_length = find_length(res_func3.get(i));
+            if(here_length < res_closer){
+                res_closer = here_length;
+                res_idx = i;
+            }
+        }
 
+        return res_idx;
+    }
+
+    // 출발점과 환승지(find_point)까지의 거리 비용 계산
+    public int find_length(RDTO find_point){
+        int res_len =0;
+
+        return res_len;
+    }
 
     /*
     기능 4
