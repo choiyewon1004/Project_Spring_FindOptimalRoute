@@ -33,7 +33,8 @@ public class backController {
         model.addAttribute("func1",res1);
 
         List<ClusteringResult> res2 = func2(res1);
-        model.addAttribute("func2", res2);
+        print_func2_data(res2);
+        model.addAttribute("func2",res2);
 
         return "test";
 
@@ -137,15 +138,28 @@ public class backController {
         return GEO_POINT_MAP;
     }
 
+    public void print_func2_data(List<ClusteringResult> res_func2){
+        for(int i=0;i<res_func2.size();i++){
+            System.out.println("log: << GroupID >>"+res_func2.get(i).getGroupId() + " :: size : "+ res_func2.get(i).getClusteringLocationList().size() + "::::::::::::::::::::::::::::::::::::::::");
+            for(int j=0;j<4;j++){
+                System.out.println("log: "+res_func2.get(i).getClusteringLocationList().get(j).getLocationInfo().getRoute_nm());
+
+            }
+        }
+    }
+
+
     /*
     기능 3
     - API를 통해 출발점부터 군집 중심들까지의 택시 거리와 비용을 계산
     */
 
+
     /*
     기능 4
     - 가장 짧은 군집을 찾은 후 해당 군집에서 최적의 [정류장 / 역]을 찾기
      */
+
 
 
     /*
