@@ -29,9 +29,11 @@ public class backController {
 
     @GetMapping("/")
     public String index(Model model){
+        //func1
         ArrayList<RDTO> res1 =func1(start_lat, start_lng, end_lat, end_lng,set_radius);
         model.addAttribute("func1",res1);
 
+        //func2
         List<ClusteringResult> res2 = func2(res1); // groupId, groupList 로 구성
         print_func2_data(res2);
         List<RDTO> find_res2 = find_func2_middle(res2); // group 별 중심 info 정보, idx가 groupId
