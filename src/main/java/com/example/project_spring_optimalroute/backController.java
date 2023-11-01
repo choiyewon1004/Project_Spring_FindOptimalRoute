@@ -40,7 +40,7 @@ public class backController {
         model.addAttribute("func2",find_res2);
 
         //func3
-
+        int find_group = func3(find_res2);
 
 
         return "test";
