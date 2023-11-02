@@ -157,6 +157,7 @@ public class backController {
         }
     }
 
+    /*
     public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2){
         List<RDTO> list_func2_middle = new ArrayList<>();
         for(int test_idx=0;test_idx<res_func2.size();test_idx++){
@@ -184,6 +185,60 @@ public class backController {
             list_func2_middle.add(res_func2.get(test_idx).getClusteringLocationList().get(find_idx).getLocationInfo());
         }
         return list_func2_middle;
+    }*/
+
+    public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2) {
+        List<RDTO> list_func2_middle = new ArrayList<>();
+
+        for (ClusteringResult result : res_func2) {
+            List<ClusteringResult.ClusteringLocation> locations = result.getClusteringLocationList();
+
+            if (locations.isEmpty()) {
+                continue;
+            }
+
+            bubbleSort(locations);
+
+            // 중간 지점을 계산
+            int middleIndex = locations.size() / 2;
+            ClusteringResult.ClusteringLocation middleLocation = locations.get(middleIndex);
+
+            // 중간 지점 정보를 RDTO에 저장
+            RDTO middleRDTO = new RDTO();
+            middleRDTO.setRoute_lat(middleLocation.getGeoPoint().getLat());
+            middleRDTO.setRoute_lng(middleLocation.getGeoPoint().getLon());
+
+            list_func2_middle.add(middleRDTO);
+        }
+
+        return list_func2_middle;
+    }
+
+    private void bubbleSort(List<ClusteringResult.ClusteringLocation> locations) {
+        int n = locations.size();
+        boolean swapped;
+
+        for (int i = 0; i < n - 1; i++) {
+            swapped = false;
+
+            for (int j = 0; j < n - i - 1; j++) {
+                ClusteringResult.ClusteringLocation location1 = locations.get(j);
+                ClusteringResult.ClusteringLocation location2 = locations.get(j + 1);
+
+                if (location1.getGeoPoint().getLat() > location2.getGeoPoint().getLat() ||
+                        (location1.getGeoPoint().getLat() == location2.getGeoPoint().getLat() && location1.getGeoPoint().getLon() > location2.getGeoPoint().getLon())) {
+
+
+                    locations.set(j, location2);
+                    locations.set(j + 1, location1);
+                    swapped = true;
+                }
+            }
+
+            if (!swapped) {
+                break;
+            }
+        }
     }
 
     /*
@@ -238,7 +293,7 @@ public class backController {
     /*
     기능 5
     - 최종적으로 출발지~[군집에서 찾은 최적의 위치]~목적지 로 경로가 구성
-     */
+    */
     
 
 }
