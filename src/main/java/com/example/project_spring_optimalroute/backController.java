@@ -5,16 +5,20 @@ import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
 import com.example.project_spring_optimalroute.Cluster.GeoPoint;
 import com.example.project_spring_optimalroute.Cluster.KmeansClusteringService;
 import com.example.project_spring_optimalroute.Route.RDTO;
+import com.example.project_spring_optimalroute.feign.service.TmapFeignService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @Controller
@@ -260,12 +264,35 @@ public class backController {
         return res_idx;
     }
 
+
     // 출발점과 환승지(find_point)까지의 거리 비용 계산
-    public int find_length(RDTO find_point){
+
+    public int /*List<Contributor>*/ find_length(RDTO find_point){
+        // 좌표로 나와야 해서 int 말고 List로 받는게 나을 거야..
         int res_len =0;
+
+        /* 원래 코드..
+        public class TmapFeignController {
+            private final TmapFeignService tmapFeignService;
+
+            @Autowired
+            public TmapFeignController(TmapFeignService tmapFeignService){
+                this.tmapFeignService = tmapFeignService;
+            }
+
+            @GetMapping("/search/{x}/{y}") //Get, Post 둘 다 해봐도 404..
+            // 여기서 pathvariable 을 startX, startY 는 유저에게서 받고 endX, endY 는 클러스터의 중심점으로 해야됨
+            // test 중 endX,endY는 고정으로 진행
+            public CompletableFuture<String> search(@PathVariable("x") double x, @PathVariable("y") double y) {
+                CompletableFuture<String> result = tmapFeignService.fetchRouteData(x, y);
+                return result;
+            }
+        }
+        */
 
         return res_len;
     }
+
 
     /*
     기능 4
