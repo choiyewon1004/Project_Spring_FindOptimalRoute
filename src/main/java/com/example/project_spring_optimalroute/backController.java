@@ -80,8 +80,8 @@ public class backController {
 
             //bus
             String sql_bus =
-                    "SELECT * FROM stationinfo WHERE (stationInfo_code IN( SELECT DISTINCT stopInfo_station FROM stopinfo WHERE stopInfo_bus IN ( SELECT stopInfo_bus FROM stopinfo WHERE stopinfo_station IN ( SELECT stationInfo_code FROM stationinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= "+ p_set_radius+"))) AND (stationinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (stationinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
-
+                    "SELECT bsi.* FROM busStationInfo AS bsi JOIN busInfo AS bi ON bsi.busInfo_code = bi.busInfo_code WHERE bi.busInfo_nm IN ( SELECT busInfo_nm FROM busInfo WHERE busInfo_code IN ( SELECT DISTINCT stopInfo_bus FROM stopInfo WHERE stopInfo_station IN (SELECT stationInfo_code FROM stationInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= 500))";
+//                    "SELECT * FROM stationinfo WHERE (stationInfo_code IN( SELECT DISTINCT stopInfo_station FROM stopinfo WHERE stopInfo_bus IN ( SELECT stopInfo_bus FROM stopinfo WHERE stopinfo_station IN ( SELECT stationInfo_code FROM stationinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= "+ p_set_radius+"))) AND (stationinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (stationinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
             Statement stmt_bus = conn.createStatement();
             ResultSet rs_bus = stmt_bus.executeQuery(sql_bus);
 
@@ -100,7 +100,8 @@ public class backController {
 
             //subway
             String sql_subway =
-                    "SELECT * FROM subinfo WHERE (subinfo_ho IN( SELECT subinfo_ho FROM subinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subinfo_lng, subinfo_lat)) <= "+ p_set_radius+") AND (subinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (subinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
+                    "SELECT *, ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) AS distance FROM subInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) <= 500 ORDER BY distance";
+//                    "SELECT * FROM subinfo WHERE (subinfo_ho IN( SELECT subinfo_ho FROM subinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subinfo_lng, subinfo_lat)) <= "+ p_set_radius+") AND (subinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (subinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
 
             Statement stmt_subway = conn.createStatement();
             ResultSet rs_subway = stmt_subway.executeQuery(sql_subway);
