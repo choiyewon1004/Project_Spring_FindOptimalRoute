@@ -42,6 +42,8 @@ public class backController {
         //func3
         int find_group = func3(find_res2);
 
+        //func4
+        RDTO res_middle_point = func4(find_group, res2);
 
         return "test";
 
@@ -214,7 +216,24 @@ public class backController {
     - 가장 짧은 군집을 찾은 후 해당 군집에서 최적의 [정류장 / 역]을 찾기
      */
 
+    public RDTO func4(int find_idx, List<ClusteringResult> find_clustering){
+        RDTO res4 = new RDTO();
+        ClusteringResult find_cluster = find_clustering.get(find_idx);
 
+        int res_closer = 999999;
+        int res_idx =0;
+
+        for(int i=0;i<find_cluster.getClusteringLocationList().size();i++){
+            int here_length = find_length(find_cluster.getClusteringLocationList().get(i).getLocationInfo());
+            if(here_length < res_closer){
+                res_closer = here_length;
+                res_idx = i;
+            }
+        }
+
+        res4 = find_cluster.getClusteringLocationList().get(res_idx).getLocationInfo();
+        return res4;
+    }
 
     /*
     기능 5
