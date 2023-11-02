@@ -60,9 +60,9 @@ public class backController {
 
         try{
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://localhost/testdb";
-            String id = "testuser";
-            String pw = "testuser";
+            String url = "jdbc:mysql://db.diligentp.com/Tagtag";
+            String id = "tagtag";
+            String pw = "tagtag";
             Connection conn = DriverManager.getConnection(url,id,pw);
 
             Double small_lat = p_st;
