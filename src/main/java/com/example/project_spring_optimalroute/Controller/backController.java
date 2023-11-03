@@ -1,4 +1,4 @@
-package com.example.project_spring_optimalroute;
+package com.example.project_spring_optimalroute.Controller;
 
 
 import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
@@ -191,25 +191,44 @@ public class backController {
     public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2) {
         List<RDTO> list_func2_middle = new ArrayList<>();
 
-        for (ClusteringResult result : res_func2) {
-            List<ClusteringResult.ClusteringLocation> locations = result.getClusteringLocationList();
+        for (int test_idx = 0; test_idx < res_func2.size(); test_idx++) {
+            List<ClusteringResult.ClusteringLocation> locations = res_func2.get(test_idx).getClusteringLocationList();
 
             if (locations.isEmpty()) {
+                // 위치 정보가 없는 군집은 스킵합니다.
                 continue;
             }
 
+            // 버블 정렬을 사용하여 위치 정보를 정렬합니다.
             bubbleSort(locations);
 
-            // 중간 지점을 계산
+            // 중간 지점을 계산합니다.
             int middleIndex = locations.size() / 2;
             ClusteringResult.ClusteringLocation middleLocation = locations.get(middleIndex);
 
-            // 중간 지점 정보를 RDTO에 저장
+            // 중간 지점 정보를 RDTO에 저장합니다.
             RDTO middleRDTO = new RDTO();
             middleRDTO.setRoute_lat(middleLocation.getGeoPoint().getLat());
             middleRDTO.setRoute_lng(middleLocation.getGeoPoint().getLon());
 
             list_func2_middle.add(middleRDTO);
+
+            // 1. 완성된 클러스터의 인덱스를 추가한 데이터 프레임을 출력
+            System.out.println("Cluster Index: " + test_idx);
+            for (ClusteringResult.ClusteringLocation location : locations) {
+                System.out.println("Location: Lat=" + location.getGeoPoint().getLat() + ", Lon=" + location.getGeoPoint().getLon());
+            }
+
+            // 2. 군집별로 경도와 위도의 평균 값을 인덱스와 함께 출력
+            double totalLat = 0;
+            double totalLon = 0;
+            for (ClusteringResult.ClusteringLocation location : locations) {
+                totalLat += location.getGeoPoint().getLat();
+                totalLon += location.getGeoPoint().getLon();
+            }
+            double avgLat = totalLat / locations.size();
+            double avgLon = totalLon / locations.size();
+            System.out.println("Cluster " + test_idx + " Average: Lat=" + avgLat + ", Lon=" + avgLon);
         }
 
         return list_func2_middle;
@@ -229,13 +248,14 @@ public class backController {
                 if (location1.getGeoPoint().getLat() > location2.getGeoPoint().getLat() ||
                         (location1.getGeoPoint().getLat() == location2.getGeoPoint().getLat() && location1.getGeoPoint().getLon() > location2.getGeoPoint().getLon())) {
 
-
+                    // location1과 location2를 교환합니다.
                     locations.set(j, location2);
                     locations.set(j + 1, location1);
                     swapped = true;
                 }
             }
 
+            // 내부 루프에서 요소를 교환하지 않으면, 리스트는 이미 정렬된 상태입니다.
             if (!swapped) {
                 break;
             }
