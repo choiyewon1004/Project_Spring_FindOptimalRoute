@@ -22,6 +22,10 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    set('springCloudVersion', "2022.0.4")
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -35,9 +39,19 @@ dependencies {
 
     implementation 'com.github.haifengl:smile-core:2.5.3' // clustering 알고리즘
 
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+//    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.0.3'
 
 }
 
+// add springcloud for openfeign
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
 tasks.named('test') {
     useJUnitPlatform()
 }

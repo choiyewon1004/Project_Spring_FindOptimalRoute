@@ -1,11 +1,13 @@
-package com.example.project_spring_optimalroute;
+package com.example.project_spring_optimalroute.Controller;
 
 
 import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
 import com.example.project_spring_optimalroute.Cluster.GeoPoint;
 import com.example.project_spring_optimalroute.Cluster.KmeansClusteringService;
 import com.example.project_spring_optimalroute.Route.RDTO;
+import com.example.project_spring_optimalroute.feign.service.TmapFeignService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,7 +27,7 @@ public class backController {
     public Integer set_radius = 3000;
 
     private final KmeansClusteringService kmeansClusteringService ;
-
+    private final TmapFeignService tmapFeignService;
 
     @GetMapping("/")
     public String index(Model model){
@@ -35,7 +37,7 @@ public class backController {
 
         //func2
         List<ClusteringResult> res2 = func2(res1); // groupId, groupList 로 구성
-        print_func2_data(res2);
+        //print_func2_data(res2);
         List<RDTO> find_res2 = find_func2_middle(res2); // group 별 중심 info 정보, idx가 groupId
         model.addAttribute("func2",find_res2);
 
@@ -43,7 +45,7 @@ public class backController {
         int find_group = func3(find_res2);
 
         //func4
-        RDTO res_middle_point = func4(find_group, res2);
+        //RDTO res_middle_point = func4(find_group, res2);
 
         return "test";
 
@@ -162,7 +164,7 @@ public class backController {
         }
     }
 
-/*
+
     public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2){
         List<RDTO> list_func2_middle = new ArrayList<>();
         for(int test_idx=0;test_idx<res_func2.size();test_idx++){
@@ -190,10 +192,10 @@ public class backController {
             list_func2_middle.add(res_func2.get(test_idx).getClusteringLocationList().get(find_idx).getLocationInfo());
         }
         return list_func2_middle;
-    }*/
+    }
 
 
-    public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2) {
+    /*public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2) {
         List<RDTO> list_func2_middle = new ArrayList<>();
 
         for (int i = 0; i < res_func2.size(); i++) {
@@ -214,10 +216,10 @@ public class backController {
 
             list_func2_middle.add(middleRDTO);
 
-            System.out.println("Cluster Index: " + res_func2.get(i).getGroupId());
-            for (ClusteringResult.ClusteringLocation location : locations) {
-                System.out.println("Location: Lat=" + location.getGeoPoint().getLat() + ", Lon=" + location.getGeoPoint().getLon());
-            }
+//            System.out.println("Cluster Index: " + res_func2.get(i).getGroupId());
+//            for (ClusteringResult.ClusteringLocation location : locations) {
+//                System.out.println("Location: Lat=" + location.getGeoPoint().getLat() + ", Lon=" + location.getGeoPoint().getLon());
+//            }
 
             double totalLat = 0;
             double totalLon = 0;
@@ -257,7 +259,7 @@ public class backController {
                 break;
             }
         }
-    }
+    }*/
 
     /*
     기능 3
@@ -280,6 +282,8 @@ public class backController {
     // 출발점과 환승지(find_point)까지의 거리 비용 계산
     public int find_length(RDTO find_point){
         int res_len =0;
+
+        System.out.println("find_length :: "+tmapFeignService.fetchRouteData(find_point.getRoute_lat(), find_point.getRoute_lng()));
 
         return res_len;
     }
