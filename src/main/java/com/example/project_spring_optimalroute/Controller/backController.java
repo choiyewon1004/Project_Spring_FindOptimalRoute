@@ -5,7 +5,6 @@ import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
 import com.example.project_spring_optimalroute.Cluster.GeoPoint;
 import com.example.project_spring_optimalroute.Cluster.KmeansClusteringService;
 import com.example.project_spring_optimalroute.Route.RDTO;
-import com.example.project_spring_optimalroute.feign.service.TmapFeignService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -27,13 +26,13 @@ public class backController {
     public Integer set_radius = 3000;
 
     private final KmeansClusteringService kmeansClusteringService ;
-    private final TmapFeignService tmapFeignService;
 
     @GetMapping("/")
     public String index(Model model){
         //func1
         ArrayList<RDTO> res1 =func1(start_lat, start_lng, end_lat, end_lng,set_radius);
         model.addAttribute("func1",res1);
+        System.out.println(res1);
 
         //func2
         List<ClusteringResult> res2 = func2(res1); // groupId, groupList 로 구성
@@ -41,12 +40,14 @@ public class backController {
         List<RDTO> find_res2 = find_func2_middle(res2); // group 별 중심 info 정보, idx가 groupId
         model.addAttribute("func2",find_res2);
 
+        System.out.println(find_res2.size());
+/*
         //func3
         int find_group = func3(find_res2);
 
         //func4
         //RDTO res_middle_point = func4(find_group, res2);
-
+*/
         return "test";
 
     }
@@ -61,14 +62,14 @@ public class backController {
         ArrayList<RDTO> res_list = new ArrayList<RDTO>();
 
         try{
-            Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://localhost:3306/testdb";
-            String id = "testuser";
-            String pw = "testuser";
+            Class.forName("com.mysql.cj.jdbc.Driver");
+//            String url = "jdbc:mysql://localhost:3306/testdb";
+//            String id = "testuser";
+//            String pw = "testuser";
 
-//            String url = "jdbc:mysql://db.diligentp.com/Tagtag";
-//            String id = "tagtag";
-//            String pw = "tagtag";
+            String url = "jdbc:mysql://db.diligentp.com/Tagtag";
+            String id = "tagtag";
+            String pw = "tagtag";
             Connection conn = DriverManager.getConnection(url,id,pw);
 
             Double small_lat = p_st;
@@ -165,62 +166,38 @@ public class backController {
     }
 
 
-    public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2){
-        List<RDTO> list_func2_middle = new ArrayList<>();
-        for(int test_idx=0;test_idx<res_func2.size();test_idx++){
-            int find_size = res_func2.get(test_idx).getClusteringLocationList().size();
-            for(int i=0;i<find_size;i++){
-                for(int j=0;j<find_size;j++){
-                    if(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint().getLat() > res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint().getLat() ){
-                        ClusteringResult.ClusteringLocation temp1 = ClusteringResult.ClusteringLocation.of(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint(),res_func2.get(test_idx).getClusteringLocationList().get(i).getLocationInfo());
-                        res_func2.get(test_idx).getClusteringLocationList().get(i).setLocationInfo(res_func2.get(test_idx).getClusteringLocationList().get(j).getLocationInfo());
-                        res_func2.get(test_idx).getClusteringLocationList().get(i).setGeoPoint(res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint());
-                        res_func2.get(test_idx).getClusteringLocationList().get(j).setLocationInfo(temp1.getLocationInfo());
-                        res_func2.get(test_idx).getClusteringLocationList().get(j).setGeoPoint(temp1.getGeoPoint());
-                    }else if(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint().getLat() == res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint().getLat()){
-                        if(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint().getLon() > res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint().getLon()){
-                            ClusteringResult.ClusteringLocation temp2 = ClusteringResult.ClusteringLocation.of(res_func2.get(test_idx).getClusteringLocationList().get(i).getGeoPoint(),res_func2.get(test_idx).getClusteringLocationList().get(i).getLocationInfo());
-                            res_func2.get(test_idx).getClusteringLocationList().get(i).setLocationInfo(res_func2.get(test_idx).getClusteringLocationList().get(j).getLocationInfo());
-                            res_func2.get(test_idx).getClusteringLocationList().get(i).setGeoPoint(res_func2.get(test_idx).getClusteringLocationList().get(j).getGeoPoint());
-                            res_func2.get(test_idx).getClusteringLocationList().get(j).setLocationInfo(temp2.getLocationInfo());
-                            res_func2.get(test_idx).getClusteringLocationList().get(j).setGeoPoint(temp2.getGeoPoint());
-                        }
-                    }
-                }
-            }
-            int find_idx = find_size/2;
-            list_func2_middle.add(res_func2.get(test_idx).getClusteringLocationList().get(find_idx).getLocationInfo());
-        }
-        return list_func2_middle;
-    }
-
-
-    /*public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2) {
+    public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2) {
         List<RDTO> list_func2_middle = new ArrayList<>();
 
         for (int i = 0; i < res_func2.size(); i++) {
             List<ClusteringResult.ClusteringLocation> locations = res_func2.get(i).getClusteringLocationList();
 
             if (locations.isEmpty()) {
+                // 위치 정보가 없는 군집은 스킵합니다.
                 continue;
             }
 
+            // 버블 정렬을 사용하여 위치 정보를 정렬합니다.
             bubbleSort(locations);
 
+            // 중간 지점을 계산합니다.
             int middleIndex = locations.size() / 2;
             ClusteringResult.ClusteringLocation middleLocation = locations.get(middleIndex);
 
+            // 중간 지점 정보를 RDTO에 저장합니다.
             RDTO middleRDTO = new RDTO();
             middleRDTO.setRoute_lat(middleLocation.getGeoPoint().getLat());
             middleRDTO.setRoute_lng(middleLocation.getGeoPoint().getLon());
 
             list_func2_middle.add(middleRDTO);
 
-//            System.out.println("Cluster Index: " + res_func2.get(i).getGroupId());
-//            for (ClusteringResult.ClusteringLocation location : locations) {
-//                System.out.println("Location: Lat=" + location.getGeoPoint().getLat() + ", Lon=" + location.getGeoPoint().getLon());
-//            }
+            // 1. 완성된 클러스터의 인덱스를 추가한 데이터 프레임을 출력
+            System.out.println("Cluster Index: " + res_func2.get(i).getGroupId());
+            for (ClusteringResult.ClusteringLocation location : locations) {
+                System.out.println("Location: Lat=" + location.getGeoPoint().getLat() + ", Lon=" + location.getGeoPoint().getLon());
+            }
 
+            // 2. 군집별로 경도와 위도의 평균 값을 인덱스와 함께 출력
             double totalLat = 0;
             double totalLon = 0;
             for (ClusteringResult.ClusteringLocation location : locations) {
@@ -231,7 +208,7 @@ public class backController {
             double avgLon = totalLon / locations.size();
             System.out.println("Cluster " + res_func2.get(i).getGroupId() + " Average: Lat=" + avgLat + ", Lon=" + avgLon);
         }
-        System.out.println(list_func2_middle);
+
         return list_func2_middle;
     }
 
@@ -249,17 +226,19 @@ public class backController {
                 if (location1.getGeoPoint().getLat() > location2.getGeoPoint().getLat() ||
                         (location1.getGeoPoint().getLat() == location2.getGeoPoint().getLat() && location1.getGeoPoint().getLon() > location2.getGeoPoint().getLon())) {
 
+                    // location1과 location2를 교환합니다.
                     locations.set(j, location2);
                     locations.set(j + 1, location1);
                     swapped = true;
                 }
             }
 
+            // 내부 루프에서 요소를 교환하지 않으면, 리스트는 이미 정렬된 상태입니다.
             if (!swapped) {
                 break;
             }
         }
-    }*/
+    }
 
     /*
     기능 3
@@ -280,10 +259,28 @@ public class backController {
     }
 
     // 출발점과 환승지(find_point)까지의 거리 비용 계산
-    public int find_length(RDTO find_point){
+    public int /*List<Contributor>*/ find_length(RDTO find_point){
+        // 좌표로 나와야 해서 int 말고 List로 받는게 나을 거야..
         int res_len =0;
 
-        System.out.println("find_length :: "+tmapFeignService.fetchRouteData(find_point.getRoute_lat(), find_point.getRoute_lng()));
+        /* 원래 코드..
+        public class TmapFeignController {
+            private final TmapFeignService tmapFeignService;
+
+            @Autowired
+            public TmapFeignController(TmapFeignService tmapFeignService){
+                this.tmapFeignService = tmapFeignService;
+            }
+
+            @GetMapping("/search/{x}/{y}") //Get, Post 둘 다 해봐도 404..
+            // 여기서 pathvariable 을 startX, startY 는 유저에게서 받고 endX, endY 는 클러스터의 중심점으로 해야됨
+            // test 중 endX,endY는 고정으로 진행
+            public CompletableFuture<String> search(@PathVariable("x") double x, @PathVariable("y") double y) {
+                CompletableFuture<String> result = tmapFeignService.fetchRouteData(x, y);
+                return result;
+            }
+        }
+        */
 
         return res_len;
     }
