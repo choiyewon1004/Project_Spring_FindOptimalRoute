@@ -1,4 +1,4 @@
-package com.example.project_spring_optimalroute.Controller;
+package com.example.project_spring_optimalroute;
 
 
 import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
@@ -60,9 +60,13 @@ public class backController {
 
         try{
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://db.diligentp.com/Tagtag";
-            String id = "tagtag";
-            String pw = "tagtag";
+            String url = "jdbc:mysql://localhost:3306/testdb";
+            String id = "testuser";
+            String pw = "testuser";
+
+//            String url = "jdbc:mysql://db.diligentp.com/Tagtag";
+//            String id = "tagtag";
+//            String pw = "tagtag";
             Connection conn = DriverManager.getConnection(url,id,pw);
 
             Double small_lat = p_st;
@@ -80,8 +84,8 @@ public class backController {
 
             //bus
             String sql_bus =
-                    "SELECT bsi.* FROM busStationInfo AS bsi JOIN busInfo AS bi ON bsi.busInfo_code = bi.busInfo_code WHERE bi.busInfo_nm IN ( SELECT busInfo_nm FROM busInfo WHERE busInfo_code IN ( SELECT DISTINCT stopInfo_bus FROM stopInfo WHERE stopInfo_station IN (SELECT stationInfo_code FROM stationInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= 500))";
-//                    "SELECT * FROM stationinfo WHERE (stationInfo_code IN( SELECT DISTINCT stopInfo_station FROM stopinfo WHERE stopInfo_bus IN ( SELECT stopInfo_bus FROM stopinfo WHERE stopinfo_station IN ( SELECT stationInfo_code FROM stationinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= "+ p_set_radius+"))) AND (stationinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (stationinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
+//                    "SELECT bsi.* FROM busStationInfo AS bsi JOIN busInfo AS bi ON bsi.busInfo_code = bi.busInfo_code WHERE bi.busInfo_nm IN ( SELECT busInfo_nm FROM busInfo WHERE busInfo_code IN ( SELECT DISTINCT stopInfo_bus FROM stopInfo WHERE stopInfo_station IN (SELECT stationInfo_code FROM stationInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= 500))";
+                    "SELECT * FROM stationinfo WHERE (stationInfo_code IN( SELECT DISTINCT stopInfo_station FROM stopinfo WHERE stopInfo_bus IN ( SELECT stopInfo_bus FROM stopinfo WHERE stopinfo_station IN ( SELECT stationInfo_code FROM stationinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= "+ p_set_radius+"))) AND (stationinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (stationinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
             Statement stmt_bus = conn.createStatement();
             ResultSet rs_bus = stmt_bus.executeQuery(sql_bus);
 
@@ -100,8 +104,8 @@ public class backController {
 
             //subway
             String sql_subway =
-                    "SELECT *, ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) AS distance FROM subInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) <= 500 ORDER BY distance";
-//                    "SELECT * FROM subinfo WHERE (subinfo_ho IN( SELECT subinfo_ho FROM subinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subinfo_lng, subinfo_lat)) <= "+ p_set_radius+") AND (subinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (subinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
+//                    "SELECT *, ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) AS distance FROM subInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) <= 500 ORDER BY distance";
+                    "SELECT * FROM subinfo WHERE (subinfo_ho IN( SELECT subinfo_ho FROM subinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subinfo_lng, subinfo_lat)) <= "+ p_set_radius+") AND (subinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (subinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
 
             Statement stmt_subway = conn.createStatement();
             ResultSet rs_subway = stmt_subway.executeQuery(sql_subway);
@@ -158,7 +162,7 @@ public class backController {
         }
     }
 
-    /*
+/*
     public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2){
         List<RDTO> list_func2_middle = new ArrayList<>();
         for(int test_idx=0;test_idx<res_func2.size();test_idx++){
@@ -188,38 +192,33 @@ public class backController {
         return list_func2_middle;
     }*/
 
+
     public List<RDTO> find_func2_middle(List<ClusteringResult> res_func2) {
         List<RDTO> list_func2_middle = new ArrayList<>();
 
-        for (int test_idx = 0; test_idx < res_func2.size(); test_idx++) {
-            List<ClusteringResult.ClusteringLocation> locations = res_func2.get(test_idx).getClusteringLocationList();
+        for (int i = 0; i < res_func2.size(); i++) {
+            List<ClusteringResult.ClusteringLocation> locations = res_func2.get(i).getClusteringLocationList();
 
             if (locations.isEmpty()) {
-                // 위치 정보가 없는 군집은 스킵합니다.
                 continue;
             }
 
-            // 버블 정렬을 사용하여 위치 정보를 정렬합니다.
             bubbleSort(locations);
 
-            // 중간 지점을 계산합니다.
             int middleIndex = locations.size() / 2;
             ClusteringResult.ClusteringLocation middleLocation = locations.get(middleIndex);
 
-            // 중간 지점 정보를 RDTO에 저장합니다.
             RDTO middleRDTO = new RDTO();
             middleRDTO.setRoute_lat(middleLocation.getGeoPoint().getLat());
             middleRDTO.setRoute_lng(middleLocation.getGeoPoint().getLon());
 
             list_func2_middle.add(middleRDTO);
 
-            // 1. 완성된 클러스터의 인덱스를 추가한 데이터 프레임을 출력
-            System.out.println("Cluster Index: " + test_idx);
+            System.out.println("Cluster Index: " + res_func2.get(i).getGroupId());
             for (ClusteringResult.ClusteringLocation location : locations) {
                 System.out.println("Location: Lat=" + location.getGeoPoint().getLat() + ", Lon=" + location.getGeoPoint().getLon());
             }
 
-            // 2. 군집별로 경도와 위도의 평균 값을 인덱스와 함께 출력
             double totalLat = 0;
             double totalLon = 0;
             for (ClusteringResult.ClusteringLocation location : locations) {
@@ -228,9 +227,9 @@ public class backController {
             }
             double avgLat = totalLat / locations.size();
             double avgLon = totalLon / locations.size();
-            System.out.println("Cluster " + test_idx + " Average: Lat=" + avgLat + ", Lon=" + avgLon);
+            System.out.println("Cluster " + res_func2.get(i).getGroupId() + " Average: Lat=" + avgLat + ", Lon=" + avgLon);
         }
-
+        System.out.println(list_func2_middle);
         return list_func2_middle;
     }
 
@@ -248,14 +247,12 @@ public class backController {
                 if (location1.getGeoPoint().getLat() > location2.getGeoPoint().getLat() ||
                         (location1.getGeoPoint().getLat() == location2.getGeoPoint().getLat() && location1.getGeoPoint().getLon() > location2.getGeoPoint().getLon())) {
 
-                    // location1과 location2를 교환합니다.
                     locations.set(j, location2);
                     locations.set(j + 1, location1);
                     swapped = true;
                 }
             }
 
-            // 내부 루프에서 요소를 교환하지 않으면, 리스트는 이미 정렬된 상태입니다.
             if (!swapped) {
                 break;
             }
