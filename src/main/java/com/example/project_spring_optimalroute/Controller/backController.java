@@ -1,6 +1,7 @@
 package com.example.project_spring_optimalroute.Controller;
 
 
+import com.example.project_spring_optimalroute.API.TmapWebClient;
 import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
 import com.example.project_spring_optimalroute.Cluster.GeoPoint;
 import com.example.project_spring_optimalroute.Cluster.KmeansClusteringService;
@@ -29,25 +30,26 @@ public class backController {
 
     @GetMapping("/")
     public String index(Model model){
+        System.out.println("test");
         //func1
         ArrayList<RDTO> res1 =func1(start_lat, start_lng, end_lat, end_lng,set_radius);
         model.addAttribute("func1",res1);
-        System.out.println(res1);
 
         //func2
         List<ClusteringResult> res2 = func2(res1); // groupId, groupList 로 구성
-        //print_func2_data(res2);
+        print_func2_data(res2);
+
         List<RDTO> find_res2 = find_func2_middle(res2); // group 별 중심 info 정보, idx가 groupId
         model.addAttribute("func2",find_res2);
 
         System.out.println(find_res2.size());
-/*
+
         //func3
-        int find_group = func3(find_res2);
+        //int find_group = func3(find_res2);
 
         //func4
         //RDTO res_middle_point = func4(find_group, res2);
-*/
+
         return "test";
 
     }
@@ -63,9 +65,6 @@ public class backController {
 
         try{
             Class.forName("com.mysql.cj.jdbc.Driver");
-//            String url = "jdbc:mysql://localhost:3306/testdb";
-//            String id = "testuser";
-//            String pw = "testuser";
 
             String url = "jdbc:mysql://db.diligentp.com/Tagtag";
             String id = "tagtag";
@@ -84,50 +83,45 @@ public class backController {
                 small_lng = p_eg;big_lng = p_sg ;
             }
 
-
             //bus
             String sql_bus =
-//                    "SELECT bsi.* FROM busStationInfo AS bsi JOIN busInfo AS bi ON bsi.busInfo_code = bi.busInfo_code WHERE bi.busInfo_nm IN ( SELECT busInfo_nm FROM busInfo WHERE busInfo_code IN ( SELECT DISTINCT stopInfo_bus FROM stopInfo WHERE stopInfo_station IN (SELECT stationInfo_code FROM stationInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= 500))";
-                    "SELECT * FROM stationinfo WHERE (stationInfo_code IN( SELECT DISTINCT stopInfo_station FROM stopinfo WHERE stopInfo_bus IN ( SELECT stopInfo_bus FROM stopinfo WHERE stopinfo_station IN ( SELECT stationInfo_code FROM stationinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= "+ p_set_radius+"))) AND (stationinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (stationinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
+                    "SELECT bsi.* FROM busStationInfo AS bsi JOIN busInfo AS bi ON bsi.busInfo_code = bi.busInfo_code WHERE bi.busInfo_nm IN ( SELECT busInfo_nm FROM busInfo WHERE busInfo_code IN ( SELECT DISTINCT stopInfo_bus FROM stopInfo WHERE stopInfo_station IN (SELECT stationInfo_code FROM stationInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(stationInfo_lng, stationInfo_lat)) <= 500)))";
             Statement stmt_bus = conn.createStatement();
             ResultSet rs_bus = stmt_bus.executeQuery(sql_bus);
 
             while(rs_bus.next()) {
                 RDTO bean = new RDTO();
-                bean.setRoute_code(Integer.parseInt(rs_bus.getString("stationinfo_code")));
-                bean.setRoute_nm(rs_bus.getString("stationinfo_nm"));
-                bean.setRoute_lat(Double.parseDouble(rs_bus.getString("stationinfo_lat")));
-                bean.setRoute_lng(Double.parseDouble(rs_bus.getString("stationinfo_lng")));
+                bean.setRoute_code(Integer.parseInt(rs_bus.getString("stationInfo_code")));
+                bean.setRoute_nm(rs_bus.getString("stationInfo_nm"));
+                bean.setRoute_lat(Double.parseDouble(rs_bus.getString("stationInfo_lat")));
+                bean.setRoute_lng(Double.parseDouble(rs_bus.getString("stationInfo_lng")));
                 bean.setRoute_type("bus");
                 res_list.add(bean);
             }
-
             System.out.println(res_list.size());
-            System.out.println(res_list);
 
             //subway
             String sql_subway =
-//                    "SELECT *, ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) AS distance FROM subInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) <= 500 ORDER BY distance";
-                    "SELECT * FROM subinfo WHERE (subinfo_ho IN( SELECT subinfo_ho FROM subinfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subinfo_lng, subinfo_lat)) <= "+ p_set_radius+") AND (subinfo_lng BETWEEN "+ small_lng +" AND " +big_lng+") AND (subinfo_lat BETWEEN "+ small_lat +"AND " +big_lat+ "))";
-
+                    "SELECT *, ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) AS distance FROM subInfo WHERE ST_Distance_Sphere(POINT("+ p_eg +","+  p_et  +"), POINT(subInfo_lng, subInfo_lat)) <= 500 ORDER BY distance";
             Statement stmt_subway = conn.createStatement();
             ResultSet rs_subway = stmt_subway.executeQuery(sql_subway);
 
             while(rs_subway.next()) {
                 RDTO bean = new RDTO();
-                bean.setRoute_code(Integer.parseInt(rs_subway.getString("subinfo_code")));
-                bean.setRoute_nm(rs_subway.getString("subinfo_nm"));
-                bean.setRoute_lat(Double.parseDouble(rs_subway.getString("subinfo_lat")));
-                bean.setRoute_lng(Double.parseDouble(rs_subway.getString("subinfo_lng")));
+                bean.setRoute_code(Integer.parseInt(rs_subway.getString("subInfo_code")));
+                bean.setRoute_nm(rs_subway.getString("subInfo_nm"));
+                bean.setRoute_lat(Double.parseDouble(rs_subway.getString("subInfo_lat")));
+                bean.setRoute_lng(Double.parseDouble(rs_subway.getString("subInfo_lng")));
                 bean.setRoute_type("subway");
                 res_list.add(bean);
             }
 
             System.out.println(res_list.size());
-            System.out.println(res_list);
+
         }catch (Exception e){
             System.out.println(e);
         }
+
 
         return res_list;
     }
@@ -186,6 +180,9 @@ public class backController {
 
             // 중간 지점 정보를 RDTO에 저장합니다.
             RDTO middleRDTO = new RDTO();
+            middleRDTO.setRoute_type(middleLocation.getLocationInfo().getRoute_type());
+            middleRDTO.setRoute_nm(middleLocation.getLocationInfo().getRoute_nm());
+            middleRDTO.setRoute_code(middleLocation.getLocationInfo().getRoute_code());
             middleRDTO.setRoute_lat(middleLocation.getGeoPoint().getLat());
             middleRDTO.setRoute_lng(middleLocation.getGeoPoint().getLon());
 
@@ -262,26 +259,8 @@ public class backController {
     public int /*List<Contributor>*/ find_length(RDTO find_point){
         // 좌표로 나와야 해서 int 말고 List로 받는게 나을 거야..
         int res_len =0;
-
-        /* 원래 코드..
-        public class TmapFeignController {
-            private final TmapFeignService tmapFeignService;
-
-            @Autowired
-            public TmapFeignController(TmapFeignService tmapFeignService){
-                this.tmapFeignService = tmapFeignService;
-            }
-
-            @GetMapping("/search/{x}/{y}") //Get, Post 둘 다 해봐도 404..
-            // 여기서 pathvariable 을 startX, startY 는 유저에게서 받고 endX, endY 는 클러스터의 중심점으로 해야됨
-            // test 중 endX,endY는 고정으로 진행
-            public CompletableFuture<String> search(@PathVariable("x") double x, @PathVariable("y") double y) {
-                CompletableFuture<String> result = tmapFeignService.fetchRouteData(x, y);
-                return result;
-            }
-        }
-        */
-
+        TmapWebClient tmapWebClient = new TmapWebClient();
+        tmapWebClient.TmapWebClient(start_lat,start_lng, find_point.getRoute_lat(), find_point.getRoute_lng());
         return res_len;
     }
 

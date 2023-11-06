@@ -6,8 +6,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@EnableFeignClients
-@ComponentScan(basePackages = "com.example.project_spring_optimalroute.feign.client")
+//@EnableFeignClients
+//@ComponentScan(basePackages = "com.example.project_spring_optimalroute.feign.client")
 public class ProjectSpringOptimalrouteApplication {
 
     public static void main(String[] args) {

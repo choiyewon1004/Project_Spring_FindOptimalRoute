@@ -6,23 +6,23 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-@Table(name = "stationinfo")
+@Table(name = "stationInfo")
 @Entity
 public class StationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int stationinfo_code;
 
-    @Column
+    @Column(name = "stationInfo_ars")
     private int stationinfo_ars;
 
-    @Column
+    @Column(name = "stationInfo_nm")
     private String stationinfo_nm;
 
-    @Column
+    @Column(name = "stationInfo_lng")
     private Double stationinfo_lng;
 
-    @Column
+    @Column(name = "stationInfo_lat")
     private Double stationinfo_lat;
 
 

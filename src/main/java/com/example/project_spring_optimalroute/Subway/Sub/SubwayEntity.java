@@ -6,23 +6,24 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-@Table(name = "subinfo")
+@Table(name = "subInfo")
 @Entity
 public class SubwayEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "subInfo_code")
     private int subinfo_code;
 
-    @Column
+    @Column(name = "subInfo_nm")
     private String subinfo_nm;
 
-    @Column
+    @Column(name = "subInfo_lat")
     private Double subinfo_lat;
 
-    @Column
+    @Column(name = "subInfo_lng")
     private Double subinfo_lng;
 
-    @Column
+    @Column(name = "subInfo_ho")
     private String subinfo_ho;
 
 
