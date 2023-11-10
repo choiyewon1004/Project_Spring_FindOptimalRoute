@@ -51,6 +51,9 @@ dependencies {
     // json editor
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
+    // mac dns setting
+    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.68.Final:osx-aarch_64'
+
 }
 
 // add springcloud for openfeign

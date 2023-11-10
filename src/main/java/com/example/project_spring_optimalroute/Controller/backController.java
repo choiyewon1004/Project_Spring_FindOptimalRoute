@@ -41,12 +41,16 @@ public class backController {
     @GetMapping("/")
     public String index(Model model){
 
+
+
         // 여기서 유저 입력 변수 선언하고
 //        대충 이런 형식이었던 듯
 //        startX = @PathVariable("startX" double startX)
 
 //        tester
 //        System.out.println("test");
+
+        Map<String, Object> result = new HashMap<>();
 
         //func1
         ArrayList<RDTO> res1 = func1(start_lat, start_lng, end_lat, end_lng,set_radius);
@@ -67,8 +71,9 @@ public class backController {
         }
         int optimalPoint = func3(targetCluster);
 //        System.out.println(targetCluster.get(optimalPoint));
-        func4(targetCluster.get(optimalPoint));
-        System.out.println(func4(targetCluster.get(optimalPoint)).get("bus경로"));
+        result = func4(targetCluster.get(optimalPoint));
+        System.out.println(result);
+
 
 //
 //        처음에 작성한 병렬통신 결과 테스트
