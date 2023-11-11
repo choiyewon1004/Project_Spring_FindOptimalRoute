@@ -7,21 +7,26 @@ import com.example.project_spring_optimalroute.Cluster.ClusteringResult;
 import com.example.project_spring_optimalroute.Cluster.GeoPoint;
 import com.example.project_spring_optimalroute.Cluster.KmeansClusteringService;
 import com.example.project_spring_optimalroute.Route.RDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
 @RequiredArgsConstructor
-@Controller
+@RestController
 public class backController {
 //
 
-    public Double start_lat = 37.45751315203417; public Double start_lng = 126.88862420186092;
-    public Double end_lat = 37.55197466819207; public Double end_lng = 126.97323574278629 ;
+//    Double start_lat = 37.45751315203417; Double start_lng = 126.88862420186092;
+//    Double end_lat = 37.55197466819207; Double end_lng = 126.97323574278629 ;
+
     // 범위 단위를 알려주세요!
     public Integer set_radius = 1000;
 
@@ -38,11 +43,13 @@ public class backController {
     private final BusApiClient busApiClient;
 
     // 여기 url을 "/search/{startX}/{startY}/{endX}/{endY}" 로 하면 될 듯 합니다.
-    @GetMapping("/")
-    public String index(Model model){
+    @GetMapping("/search/{startX}/{startY}/{endX}/{endY}")
+    public String index(Model model,@PathVariable("startX") double startX, @PathVariable("startY") double startY, @PathVariable("endX") double endX, @PathVariable("endY") double endY) {
 
-
-
+        double start_lat = startX;
+        double start_lng = startY;
+        double end_lat = endX;
+        double end_lng = endY;
         // 여기서 유저 입력 변수 선언하고
 //        대충 이런 형식이었던 듯
 //        startX = @PathVariable("startX" double startX)
@@ -50,11 +57,9 @@ public class backController {
 //        tester
 //        System.out.println("test");
 
-        Map<String, Object> result = new HashMap<>();
-
         //func1
-        ArrayList<RDTO> res1 = func1(start_lat, start_lng, end_lat, end_lng,set_radius);
-        model.addAttribute("func1",res1);
+        ArrayList<RDTO> res1 = func1(start_lat, start_lng, end_lat, end_lng, set_radius);
+        model.addAttribute("func1", res1);
 
         //func2
         List<ClusteringResult> res2 = func2(res1); // groupId, groupList 로 구성
@@ -64,16 +69,28 @@ public class backController {
 //        System.out.println(res2.get(0).getGroupId());
         Map find_res2 = find_func2_middle(res2);
 //        System.out.println(find_res2);
-        int optimalClusterIdx = func3(find_res2);
+        int optimalClusterIdx = func3(find_res2, start_lng, start_lat);
         Map<Integer, List<Double>> targetCluster = new HashMap<>();
-        for(int i = 0; i < res2.get(optimalClusterIdx).getClusteringLocationList().size(); i++){
-            targetCluster.put(i, List.of(res2.get(optimalClusterIdx).getClusteringLocationList().get(i).getGeoPoint().getLat(),res2.get(optimalClusterIdx).getClusteringLocationList().get(i).getGeoPoint().getLon()));
+        for (int i = 0; i < res2.get(optimalClusterIdx).getClusteringLocationList().size(); i++) {
+            targetCluster.put(i, List.of(res2.get(optimalClusterIdx).getClusteringLocationList().get(i).getGeoPoint().getLat(), res2.get(optimalClusterIdx).getClusteringLocationList().get(i).getGeoPoint().getLon()));
         }
-        int optimalPoint = func3(targetCluster);
+//        targetCluster.get(optimalPoint)
 //        System.out.println(targetCluster.get(optimalPoint));
-        result = func4(targetCluster.get(optimalPoint));
-        System.out.println(result);
+//        System.out.println("result =" + func4(targetCluster.get(optimalPoint)).get("taxiRoutes").getClass().getName());
+//        System.out.println("result =" + func4(targetCluster.get(optimalPoint)));
+        Map<String, Map> result = func4(targetCluster.get(optimalClusterIdx), start_lat, start_lng, end_lat, end_lng);
 
+        String resultJsonString = null;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            resultJsonString = objectMapper.writeValueAsString(result);
+//            System.out.println(resultJsonString);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        //        resultMap = {taxiRoutes = {taxi =  List<List<Double>> coordinate}, busRoutes = {bus = {Map<Integer, Map<List<String>, List<List<Double>>>> routesInfo}}
 
 //
 //        처음에 작성한 병렬통신 결과 테스트
@@ -87,7 +104,7 @@ public class backController {
 //        System.out.println(apiTest);
 ////        리턴 값이 바뀌었기 때문에 주석 처리
 //        List<RDTO> find_res2 = find_func2_middle(res2); // group 별 중심 info 정보, idx가 groupId
-        model.addAttribute("func2",find_res2);
+//        model.addAttribute("func2",find_res2);
 
 //        find_res2 객체 테스트
 //        System.out.println(find_res2.size() + "\nfindResMid[0] Lat : " + find_res2.get(0).getRoute_lat() + "\nfindResMid[0] Lng : " + find_res2.get(0).getRoute_lng());
@@ -98,9 +115,8 @@ public class backController {
 
         //func4
         //RDTO res_middle_point = func4(find_group, res2);
-
-        return null;
-
+//        System.out.println(resultJsonString);
+        return resultJsonString;
     }
 
     /*
@@ -262,7 +278,7 @@ public class backController {
             list_func2_middle.add(middleRDTO);
 
             // 1. 완성된 클러스터의 인덱스를 추가한 데이터 프레임을 출력
-            System.out.println("Cluster Index: " + res_func2.get(i).getGroupId() + "\nCluster Location Data SIZE : " + res_func2.get(i).getClusteringLocationList().size());
+//            System.out.println("Cluster Index: " + res_func2.get(i).getGroupId() + "\nCluster Location Data SIZE : " + res_func2.get(i).getClusteringLocationList().size());
 //            for (ClusteringResult.ClusteringLocation location : locations) {
 //                System.out.println("Location: Lat=" + location.getGeoPoint().getLat() + ", Lon=" + location.getGeoPoint().getLon());
 //            }
@@ -336,7 +352,7 @@ public class backController {
     // 최적 클러스터 찾기
     // 리턴 값은 cluster id = integer
     // 인자는 func_2_mid 의 return 값과 clustering 된 전체
-    public Integer func3(Map<Integer, List<Double>> clusterMidPoint){
+    public Integer func3(Map<Integer, List<Double>> clusterMidPoint, double start_lng, double start_lat){
 
         initCompare();
         // 출발지 좌표
@@ -480,34 +496,71 @@ public class backController {
 //                });
 
 
+    // mono 해체 함수
+    public Mono<Map<String, Object>> flattenMono(Mono<Mono<Map<String, Object>>> nestedMono) {
+        // 중첩된 Mono를 flatMap을 사용하여 평탄화
+        return nestedMono.flatMap(mono -> mono);
+    }
+
     /*
     기능 4
     - 가장 짧은 군집을 찾은 후 해당 군집에서 최적의 [정류장 / 역]을 찾기
      */
-    public Map<String, Object> func4(List<Double> midPoint){
+    public Map<String, Map> func4(List<Double> midPoint, double start_lat, double start_lng, double end_lat, double end_lng){
+        // input start_lat, start_lng, end_lat, end_lng
         double startX = start_lng;
         double startY = start_lat;
         double midX = midPoint.get(1);
         double midY = midPoint.get(0);
         double endX = end_lng;
-        double endY = start_lat;
-        Map<String, Object> resultMap = new HashMap<>();
-//        Map<String, Map<Integer, Map<List<String>, List<List<Double>>>>> resultBusMap = new HashMap<>();
-        tmapWebClient.TmapWebClient(startX,startY,midX,midY)
-                .subscribe(result -> {
-                    resultMap.put("taxi경로", func5(result));
-//                        System.out.println("Result for " + indexNum + ":" + ComparingTaxiEff(result));
-                });
+        double endY = end_lat;
+        Map<String ,Map> rstMap = new HashMap<>();
+        //        resultMap = {taxiRoutes = {taxi =  List<List<Double>> coordinate}, busRoutes = {bus = {Map<Integer, Map<List<String>, List<List<Double>>>> routesInfo}}
+        Map<String, List<List<Double>>> resultTaxiMap = new HashMap<>();
+        Map<String, Map<Integer, Map<List<String>, List<String>>>> resultBusMap = new HashMap<>();
 
-        busApiClient.BusWebClient(midX,midY,endX,endY)
-                .subscribe(result ->{
-//                    System.out.println(result);
-                    resultMap.put("bus경로", func5Bus(result));
-                });
+        Mono<Map<String, Object>> jsonTaxi = Mono.fromCallable(() ->
+                tmapWebClient.TmapWebClient(startX,startY,midX,midY).block());
+        //                .subscribe(result -> {
+//                    List<List<Double>> taxiGpx = func5(result);
+//                    resultTaxiMap.put("taxi", taxiGpx);
+//                    rstMap.put("taxiRoutes", resultTaxiMap);
+//                }););
+        Map<String, Object> jsonTaxi2 = jsonTaxi.block();
+        List<List<Double>> taxiGpx = func5(jsonTaxi2);
+        resultTaxiMap.put("taxi", taxiGpx);
+        rstMap.put("taxiRoutes", resultTaxiMap);
 
-        return resultMap;
+
+//        jsonTaxi2.subscribe(resultMap -> System.out.println("jsonParing" + resultMap));
+
+//        Map<String, Object> jsonTaxiFinal = flattenMono(jsonTaxi2);
+        Mono<Map<String, Object>> jsonBus = Mono.fromCallable(() ->
+                busApiClient.BusWebClient(taxiGpx.get(taxiGpx.size()-1).get(0),taxiGpx.get(taxiGpx.size()-1).get(1),endX,endY).block());
+//                .subscribe(result ->{
+//                    Map<Integer, Map<List<String>, List<String>>> busGPX = func5Bus(result);
+//                    resultBusMap.put("bus", busGPX);
+//                    rstMap.put("busRoutes", resultBusMap);
+//                });
+        System.out.println("taxiGPX 마지막 x :" + taxiGpx.get(taxiGpx.size()-1).get(0) + "taxiGPX 마지막 y :" + taxiGpx.get(taxiGpx.size()-1).get(1) + "최종 도착지 x :" + endX + "최종 도착지 Y" + endY);
+        Map<String, Object> jsonBus2 = jsonBus.block();
+        System.out.println("busAPI 호출 결과값" + jsonBus2);
+        Map<Integer, Map<List<String>, List<String>>> BusGpx = func5Bus(jsonBus2);
+        resultBusMap.put("bus", BusGpx);
+        rstMap.put("busRoutes", resultBusMap);
+
+//        System.out.println("rstMap" + rstMap);
+
+        return rstMap;
+
     }
-
+    //    private void sleep(long milliseconds) {
+//        try {
+//            Thread.sleep(milliseconds);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//    }
     public List<List<Double>> func5(Map<String, Object> data) {
 //  [[123.123,21414.123124],[123.123,21414.123124],[123.123,21414.123124],[123.123,21414.123124]]
 
@@ -524,7 +577,7 @@ public class backController {
                 result.addAll(gpxList);
             }
         }
-
+//        System.out.println("taxiRoute" + result);
         return result;
 
     }
@@ -533,12 +586,12 @@ public class backController {
     기능 5
     - 최종적으로 출발지~[군집에서 찾은 최적의 위치]~목적지 로 경로가 구성
     */
-    public Map<Integer, Map<List<String>, List<List<Double>>>> func5Bus(Map<String, Object> data) {
+    public Map<Integer, Map<List<String>, List<String>>> func5Bus(Map<String, Object> data) {
 //  [[123.123,21414.123124],[123.123,21414.123124],[123.123,21414.123124],[123.123,21414.123124]]
 
-        Map<Integer, Map<List<String>, List<List<Double>>>> result = new HashMap<>();
+        Map<Integer, Map<List<String>, List<String>>> result = new HashMap<>();
 
-        Map<List<String>, List<List<Double>>> modeCoords = new HashMap<>();
+        Map<List<String>, List<String>> modeCoords = new HashMap<>();
 
 
         Map metaData = (HashMap) data.get("metaData");
@@ -551,55 +604,119 @@ public class backController {
         String route = new String();
 
         for (int i = 0; i < itineraries.size(); i ++){
-            Map fareMap = (HashMap) itineraries.get(i);
-            ArrayList legs = (ArrayList) fareMap.get("legs");
-//            System.out.println(legs.size());
+
+            Map options = (HashMap) itineraries.get(i);
+
+            ArrayList legs = (ArrayList) options.get("legs");
+
             for (int j =0; j < legs.size();j++){
-//                result.put(i);
+                //legs 내부 단계
                 Map step = (HashMap) legs.get(j);
-//                System.out.println("step : " + step);
+                //
                 String mode = (String) step.get("mode");
+//                System.out.println("step : " + step);
                 if(mode.equals("WALK")){
                     route = "걷기";
-                }
-                else if (mode.equals("BUS")){
-                    route = (String) step.get("route");
-                }
-                else if (mode.equals("SUBWAY")){
-                    route = (String) step.get("route");
-                }
-//                System.out.println(mode);
-                if(step.containsKey("steps")) {
-                    ArrayList steps = (ArrayList) step.get("steps");
-//                    System.out.println("try" + steps);
-                    for (int k = 0; k < steps.size(); k++){
-                        // steps 내 map 개체 홀드
-                        Map stepsOb = (HashMap) steps.get(k);
-                        // 개체 마다 존재하는 linestring
-                        String lineString = (String) stepsOb.get("linestring");
-                        // lineString split 해서 test_str 이게 리스트?
+                    if(step.containsKey("steps")) {
+                        ArrayList steps = (ArrayList) step.get("steps");
+                        // steps 형태 List< Map stepsMap >
+//                    System.out.println("steps : " + steps);
+//                    System.out.println("steps type : " + steps.getClass().getName();
+                        for (int k = 0; k < steps.size(); k++) {
+                            // steps 내 map 개체 홀드
+                            List coords = new ArrayList<>();
+                            Map stepsMap = (HashMap) steps.get(k);
+                            // steps 형태 steps = {"streetName" = ,"distance" = , "description" = , "linestring" = "경도,위도 경도,위도 "}
+                            // 개체 마다 존재하는 linestring
+                            String lineString = (String) stepsMap.get("linestring");
+
+                            String unpackLineString1 = Arrays.toString(lineString.split(", "));
+                            coords.add(unpackLineString1);
+                            modeCoords.put(List.of("route." + j + "-" + k ,mode, route), coords);
+                        }
+                    } else if (step.containsKey("passShape")) {
+                        Map steps = (HashMap) step.get("passShape");
+                        String lineString = (String) steps.get("linestring");
                         String[] test_str = lineString.split(" ");
                         List coords = new ArrayList<>();
                         for (int l = 0; l<test_str.length; l++){
-                            coords.add(test_str[l].split(","));
+                            coords.add(Arrays.toString(test_str[l].split(",")));
                         }
-                        modeCoords.put(List.of(mode, route), coords);
+                        // 이게 for 안으로 들어가야되나?
+                        modeCoords.put(List.of("route." + j, mode, route), coords);
+
                     }
                 }
-                else if(step.containsKey("passShape")){
+                else if (mode.equals("BUS")){
+                    route = (String) step.get("route");
                     Map steps = (HashMap) step.get("passShape");
 //                    System.out.println("Exception" + steps);
                     String lineString = (String) steps.get("linestring");
                     String[] test_str = lineString.split(" ");
+
                     List coords = new ArrayList<>();
                     for (int l = 0; l<test_str.length; l++){
-                        coords.add(test_str[l].split(","));
+                        coords.add(Arrays.toString(test_str[l].split(",")));
                     }
                     modeCoords.put(List.of(mode, route), coords);
-
-
                 }
+                else if (mode.equals("SUBWAY")){
+                    route = (String) step.get("route");
+                    Map steps = (HashMap) step.get("passShape");
+//                    System.out.println("Exception" + steps);
+                    String lineString = (String) steps.get("linestring");
+                    String[] test_str = lineString.split(" ");
 
+                    List coords = new ArrayList<>();
+                    for (int l = 0; l<test_str.length; l++){
+                        coords.add(Arrays.toString(test_str[l].split(",")));
+                    }
+                    modeCoords.put(List.of(mode, route), coords);
+                }
+//                System.out.println(mode);
+//                if(step.containsKey("steps")) {
+//                    ArrayList steps = (ArrayList) step.get("steps");
+//                    System.out.println("try" + steps);
+//                    for (int k = 0; k < steps.size(); k++){
+//                        // steps 내 map 개체 홀드
+//                        List coords = new ArrayList<>();
+//                        Map stepsOb = (HashMap) steps.get(k);
+//                        // 개체 마다 존재하는 linestring
+//                        String lineString = (String) stepsOb.get("linestring");
+//                        // lineString split 해서 test_str 이게 리스트?
+//                        String unpackLineString1 = Arrays.toString(lineString.split(", "));
+//                        coords.add(unpackLineString1);
+//                        System.out.println("lineString_1 = " + unpackLineString1);
+//                        String[] splitList = lineString.split(" ");
+//                        String unpackLineString2 = unpackLineString1.replaceAll(" ", ",");
+//                        System.out.println("lineString_2 = " + unpackLineString2);
+//                        String unpackLineString3 = Arrays.toString(unpackLineString2.split(","));
+//                        System.out.println("lineString_3 = " + unpackLineString3);
+//                        String unpackLineString3 = Arrays.toString(unpackLineString2.split("\\s*"));
+//                        System.out.println(unpackLineString3);
+//                        List<double[]> lineStringToCoords = new ArrayList<>();
+//                        for(int n = 0; n < unpackLineString2.length; n +=2) {
+//                            coords.add(Arrays.toString())
+//                        }
+//                        System.out.println(lineStringToCoords);
+//                        System.out.println(lineStringToCoords.getClass().getName());
+//                        System.out.println("lineString = " + lineString.getClass().getName());
+//                        System.out.println(coords.getClass().getName());
+//                        modeCoords.put(List.of(mode, route), coords);
+//                    }
+//                }
+//                else if(step.containsKey("passShape")){
+//                    Map steps = (HashMap) step.get("passShape");
+//                      System.out.println("Exception" + steps);
+//                    String lineString = (String) steps.get("linestring");
+//                    String[] test_str = lineString.split(" ");
+//
+//                    List coords = new ArrayList<>();
+//                    for (int l = 0; l<test_str.length; l++){
+//                        coords.add(Arrays.toString(test_str[l].split(",")));
+//                    }
+//                    modeCoords.put(List.of(mode, route), coords);
+//                }
 //                Map stepsOb = (HashMap) steps.get(0);
 //                String lineString = (String) stepsOb.get("linestring");
 //                String[] test_str = lineString.split(" ");
@@ -609,7 +726,6 @@ public class backController {
 //                    coords.add(test_str[k].split(","));
 //                }
 //                System.out.println(coords);
-
             }
             result.put(i, modeCoords);
         }
@@ -628,6 +744,7 @@ public class backController {
 //                result.addAll(gpxList);
 //            }
 //        }
+//        System.out.println("busRoute" + result);
 
         return result;
 
