@@ -69,7 +69,7 @@ public class BusApiClient {
                 .uri("transit/routes?version=1&callback=function")
                 .header("accept", "application/json")
                 .header("appKey", appKey)
-                .body(BodyInserters.fromValue(String.format("{\"startX\":\"%.14f\",\"startY\":\"%.14f\",\"endX\":\"%.14f\",\"endY\":\"%.14f\",\"lang\":0,\"format\":\"json\",\"count\":10,\"searchDttm\":\"202301011200\"}", startX, startY, endX, endY)))
+                .body(BodyInserters.fromValue(String.format("{\"startX\":\"%.14f\",\"startY\":\"%.14f\",\"endX\":\"%.14f\",\"endY\":\"%.14f\",\"lang\":0,\"format\":\"json\",\"count\":10}", startX, startY, endX, endY)))
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(jsonString -> {

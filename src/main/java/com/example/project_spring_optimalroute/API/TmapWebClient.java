@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,7 +19,9 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -54,8 +58,15 @@ public class TmapWebClient {
                 .build();
     }
 
-    // 이 뒤에 클러스터된 데이터도 리스트로 같이 들어와야함
-    public Mono<Map<String, Object>> TmapWebClient(double StartX, double StartY, double endX, double endY) {
+    //     이 뒤에 클러스터된 데이터도 리스트로 같이 들어와야함 직렬방식 통신 코드
+    /**
+     @param startLng 출발 경도 startX
+     @param startLat 출발 위도 startY
+     @param endLng 도착 경도 endX
+     @param endLat 도착 위도 endY
+     */
+    public Mono<Map<String, Object>> TmapWebClient(double startLng, double startLat, double endLng, double endLat) {
+        // call test
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .baseUrl(baseUrl)
@@ -65,8 +76,8 @@ public class TmapWebClient {
                 .post()
                 .uri(endpoint)
                 .header("accept", "application/json")
-                .header("appKey", appKey)
-                .body(BodyInserters.fromValue(String.format("{\"tollgateFareOption\":16,\"roadType\":32,\"directionOption\":1,\"endX\":%.14f,\"endY\":%.14f,\"reqCoordType\":\"WGS84GEO\",\"startX\":129.0857934976451,\"startY\":35.28883196265564,\"speed\":10,\"detailPosFlag\":\"1\",\"resCoordType\":\"WGS84GEO\",\"sort\":\"index\"}", endX, endY)))
+                .header("appKey", "1EE0Sds9Gb5x2KuFT78Ti8NiTokKZ36D2E0dg6sc")
+                .body(BodyInserters.fromValue(String.format("{\"tollgateFareOption\":16,\"roadType\":32,\"directionOption\":1,\"endX\":%.14f,\"endY\":%.14f,\"reqCoordType\":\"WGS84GEO\",\"startX\":%.14f,\"startY\":%.14f,\"speed\":10,\"detailPosFlag\":\"1\",\"resCoordType\":\"WGS84GEO\",\"sort\":\"index\"}", endLng, endLat, startLng, startLat)))
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(jsonString -> {
@@ -85,3 +96,4 @@ public class TmapWebClient {
                 });
     }
 }
+
