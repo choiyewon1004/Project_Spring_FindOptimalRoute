@@ -76,7 +76,7 @@ public class TmapWebClient {
                 .post()
                 .uri(endpoint)
                 .header("accept", "application/json")
-                .header("appKey", "1EE0Sds9Gb5x2KuFT78Ti8NiTokKZ36D2E0dg6sc")
+                .header("appKey", appKey)
                 .body(BodyInserters.fromValue(String.format("{\"tollgateFareOption\":16,\"roadType\":32,\"directionOption\":1,\"endX\":%.14f,\"endY\":%.14f,\"reqCoordType\":\"WGS84GEO\",\"startX\":%.14f,\"startY\":%.14f,\"speed\":10,\"detailPosFlag\":\"1\",\"resCoordType\":\"WGS84GEO\",\"sort\":\"index\"}", endLng, endLat, startLng, startLat)))
                 .retrieve()
                 .bodyToMono(String.class)
